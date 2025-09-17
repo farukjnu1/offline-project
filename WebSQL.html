@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Web Sql Test</title>
+    <link href="css/bootstrap.css" rel="stylesheet" />
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <script src="jquery-1.9.1.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h3>Contact Book</h3>
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table table-bordered" id="tbl">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <form>
+                    <div class="form-group">
+                        <label class="control-label">Full Name</label>
+                        <input type="text" id="txtName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Email</label>
+                        <input type="text" id="txtEmail" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Phone</label>
+                        <input type="text" id="txtPhone" class="form-control" />
+                    </div>
+                    <div class="form-group text-right">
+                        <button type="button" id="add" class="btn btn-success">
+                            Add
+                            New
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var contacts = {};
+        contacts.db = null;
+        contacts.openDb = function () {
+            contacts.db = openDatabase("contactsdb", '1.0', 'My contact book', 2 *
+                1024 * 1024);
+        }
+        //create table
+        contacts.createTable = function () {
+            contacts.db.transaction(function (tx) {
+                var sql = "CREATE TABLE IF NOT EXISTS contacts(" +
+                    "Id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "name TEXT," +
+                    "email TEXT," +
+                    "phone TEXT)";
+                tx.executeSql(sql);
+            });
+        }
+        //Insert Data
+        contacts.addContact = function (name, email, phone) {
+            contacts.db.transaction(function (tx) {
+                tx.executeSql("INSERT INTO contacts(name, email, phone) VALUES (?, ?,?)", [name, email, phone]);
+            });
+        }
+        contacts.showContacts = function () {
+            contacts.db.transaction(function (tx) {
+                tx.executeSql("SELECT * FROM contacts", [], function (tx, resultset) {
+                    $("#tbl tbody").empty();
+                    for (var i = 0; i < resultset.rows.length; i++) {
+                        var row = resultset.rows.item(i);
+                        $("#tbl tbody").append("<tr><td>" + row.Id +
+                            "</td><td>" + row.name +
+                            "</td><td>" + row.email +
+                            "</td><td>" + row.phone + "</td></tr>");
+                    }
+                })
+            });
+        }
+        $(document).ready(function () {
+            contacts.openDb();
+            contacts.createTable();
+            contacts.showContacts();
+            $("#add").click(function () {
+                contacts.addContact($("#txtName").val(), $("#txtEmail").val(),
+                    $("#txtPhone").val());
+                contacts.showContacts();
+                $("#txtName").val("");
+                $("#txtEmail").val("");
+                $("#txtPhone").val("");
+            });
+        });
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="jquery-3.2.1.min.js"></script>
+    <style type="text/css">
+        #container {
+            width: 960px;
+            margin: 20px auto;
+            font-family: 'Segoe UI';
+            float: left;
+        }
+
+        input {
+            width: 300px;
+            height: 40px;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        #add {
+            background-color: #3eed72;
+        }
+
+        #side {
+            float: right;
+            width: 300px;
+        }
+
+        #tbl {
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <table border="1" cellspacing="1" cellpadding="1" id="tbl">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>.....</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <br /><br />
+        <div id="side">
+            <h2>Information form</h2>
+            <input type="text" id="fname" placeholder="First Name" /><br />
+            <input type="text" id="lname" placeholder="Last Name" /><br />
+            <input type="text" id="email" placeholder="Email" /><br />
+            <input type="text" id="phone" placeholder="Phone" /><br /><br /><br />
+            <input type="button" id="add" value="Add New" />
+        </div>
+    </div>
+    <script type="text/javascript">
+    var indexedDB = window.indexedDB || window.mozIndexedDB ||
+            window.webkitIndexedDB || window.msIndexedDB;
+        var db;
+        var currentEdit = null;
+        $(document).ready(function () {
+            var openReq = indexedDB.open("DetailsDB", 1);
+            openReq.onupgradeneeded = function (e) {
+                db = e.target.result;
+                var store = db.createObjectStore("Details", {
+                    keyPath: "id",
+                    autoIncrement: true
+                });
+                console.log(store);
+            }
+            openReq.onsuccess = function (e) {
+                db = e.target.result;
+                console.log(db);
+                readAll();
+              $("#add").click(function () {
+                    if ($("#fname").val() != "" && $("#lname").val() != "" &&
+                        $("#email").val() != "" && $("#phone").val() != "") {
+                        var tx = db.transaction(["Details"], "readwrite");
+                        if (currentEdit == null) {
+                            var req = tx.objectStore("Details").add({
+                                FirstName: $("#fname").val(),
+                                LastName: $("#lname").val(),
+                                Email: $("#email").val(),
+                                Phone: $("#phone").val()
+                            });
+                            req.onsuccess = function (e) {
+                                console.log("Added data.....");
+                                readAll();
+                            }
+                            $("#fname").val("");
+                            $("#lname").val("");
+                            $("#email").val("");
+                            $("#phone").val("");
+                            $("#fname").focus();
+                        }
+                        else {
+                            var req = tx.objectStore("Details").put({
+                                FirstName: $("#fname").val(),
+                                LastName: $("#lname").val(),
+                                Email: $("#email").val(),
+                                Phone: $("#phone").val(),
+                                id: currentEdit.id
+                            });
+                            req.onsuccess = function (e) {
+                                console.log("Added data.....");
+                                readAll();
+                            }
+                            $("#fname").val("");
+                            $("#lname").val("");
+                            $("#email").val("");
+                            $("#phone").val("");
+                            $("#fname").focus();
+                        }
+                        $("#add").val("Add New"); currentEdit = null;
+                    }
+                    else {
+                        alert("Please fill up all field");
+                    }
+                })
+            }
+        })
+function readAll() {
+            $("#tbl tbody").empty();
+            var tx = db.transaction(["Details"], "readonly");
+            var req = tx.objectStore("Details").openCursor();
+            req.onsuccess = function (e) {
+                var cursor = e.target.result;
+                if (!cursor) return;
+                $("#tbl tbody").append(
+                    "<tr>" +
+                    "<td>" + cursor.value.FirstName + "</td>" +
+                    "<td>" + cursor.value.LastName + "</td>" +
+                    "<td>" + cursor.value.Email + "</td>" +
+                    "<td>" + cursor.value.Phone + "</td>" +
+                    "<td>" + "<button class='edit' data-key='" + cursor.key +
+                    "'>Edit</button>|<button class='del' data-key='" + cursor.key +
+                    "'>Delete</button></td>"
+                    + "</tr>"
+                )
+                cursor.continue();
+            }
+            req.onerror = function (err) {
+                console.log(err);
+            }
+       tx.oncomplete = function () {
+                $(".del").click(function () {
+                    var id = $(this).attr('data-key');
+                    var row = $(this).parent().parent();
+                    var tx = db.transaction(["Details"], "readwrite");
+                    var store = tx.objectStore("Details");
+                    var req = store.delete(parseInt(id));
+                    req.onsuccess = function (e) {
+                        console.log("Data deleted succesfully....");
+                        row.remove();
+                    }
+                    req.onerror = function (err) {
+                        console.log(err);
+                    }
+                });
+                $(".edit").click(function (evt) {
+                    evt.preventDefault();
+                    fillForm($(this).attr('data-key'));
+                })
+            }
+        }
+        function fillForm(id) {
+            var t = db.transaction(["Details"], "readwrite");
+            var objStore = t.objectStore("Details");
+            var request = objStore.get(parseInt(id));
+            request.onsuccess = function (evt) {
+                currentEdit = request.result;
+                console.log(currentEdit);
+                $("#fname").val(currentEdit.FirstName);
+                $("#lname").val(currentEdit.LastName);
+                $("#email").val(currentEdit.Email);
+                $("#phone").val(currentEdit.Phone);
+                $("#add").val("Update");
+            }
+        }
+    </script>
+</body>
+</html>

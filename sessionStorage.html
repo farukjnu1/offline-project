@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="jquery-3.2.1.min.js"></script>
+    <style type="text/css">
+        body {
+            font-family: 'Segoe UI';
+            font-size: .90em;
+        }
+
+        #container {
+            width: 980px;
+            margin: 20px auto;
+        }
+
+        #left {
+            width: 680px;
+            float: left;
+            padding: 5px 10px 5px 0;
+        }
+
+        #right {
+            width: 280px;
+            float: right;
+            padding-left: 10px;
+        }
+
+        .label {
+            display: block;
+            font-weight: 700;
+        }
+
+        input[type=text] {
+            border: 1px solid #ccc;
+        }
+
+        #tbl {
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+            #tbl th {
+                border-right: 1px solid #ededed;
+                border-bottom: 1px solid #ededed;
+            }
+
+            #tbl td {
+                border-right: 1px solid #ededed;
+                border-bottom: 1px solid #ededed;
+                border-bottom: 1px solid #ededed;
+            }
+
+        #save {
+            width: 80px;
+            height: 40px;
+            margin-top: 10px;
+            margin-left: 30px;
+            background-color: #13bd50;
+            color: white;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="left">
+            <h2>Contact Book</h2>
+            <table id="tbl" cellpadding="3" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div id="right">
+            <h2>Add Contact</h2>
+            <div>
+                <label class="label">ID</label>
+                <input type="text" id="txtid" />
+            </div>
+            <div>
+                <label class="label">Full Name</label>
+                <input type="text" id="txtname" />
+            </div>
+            <div>
+                <label class="label">Email</label>
+                <input type="text" id="txtemail" />
+            </div>
+            <div>
+                <label class="label">Phone</label>
+                <input type="text" id="txtphone" />
+            </div>
+            <div>
+                <button type="button" id="save">Save</button>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var contacts = getContacts();
+            showContacts(contacts);
+            $("#save").click(function () {
+                var contact = {
+                    id: $("#txtid").val(),
+                    name: $("#txtname").val(),
+                    email: $("#txtemail").val(),
+                    phone: $("#txtphone").val()
+                };
+                console.log(contact);
+                contacts.push(contact);
+                sessionStorage.setItem("userData", JSON.stringify(contacts));
+                showContacts(contacts);
+            })
+        });
+        function getContacts() {
+            var data = sessionStorage.getItem("userData");
+            var contacts = data ? JSON.parse(data) : [];
+            return contacts;
+        }
+        function showContacts(contacts) {
+            $("#tbl tbody").empty();
+            $.each(contacts, function (k, v) {
+                $("#tbl tbody").append("<tr><td>" + v.id +
+                    "</td><td>" + v.name +
+                    "</td><td>" + v.email +
+                    "</td><td>" + v.phone + "</td></tr>");
+            });
+        }
+    </script>
+</body>
+</html>
